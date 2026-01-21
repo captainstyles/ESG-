@@ -65,7 +65,7 @@ if df is not None:
         st.rerun()
 
     # --- 主畫面 ---
-    st.title("🌱 ESG 模擬練習 (760題庫版)")
+    st.title("🌱 ESG 模擬練習 ")
     
     # 取得目前題目在原始 df 中的索引
     current_actual_idx = st.session_state.order[st.session_state.idx_in_order]
@@ -117,3 +117,4 @@ if df is not None:
                     st.balloons()
 
                     st.success("恭喜！您已完成本次設定的所有題目！")
+
