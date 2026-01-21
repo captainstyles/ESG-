@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 
-st.set_page_config(page_title="ESG 760題庫練習 App", layout="centered")
+st.set_page_config(page_title="ESG 題庫練習", layout="centered")
 
 # --- 讀取資料 ---
 @st.cache_data
@@ -123,3 +123,4 @@ if df is not None:
                 else:
                     st.balloons()
                     st.success("測驗結束！")
+
