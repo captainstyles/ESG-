@@ -68,7 +68,7 @@ if df is not None:
         st.rerun()
 
     # --- 主畫面 ---
-    st.title("🌱 ESG 模擬練習 (含錯題收集)")
+    st.title("🌱 ESG 模擬練習")
     
     current_total = len(st.session_state.order)
     current_actual_idx = st.session_state.order[st.session_state.idx_in_order]
@@ -123,4 +123,5 @@ if df is not None:
                 else:
                     st.balloons()
                     st.success("測驗結束！")
+
 
