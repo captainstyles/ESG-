@@ -20,7 +20,7 @@ def load_data():
 df = load_data()
 
 if df is not None:
-    st.title("🌱 ESG 永續發展基礎能力測驗 (840題完整版)")
+    st.title("🌱 ESG 永續發展基礎能力測驗")
     
     # 側邊欄設定
     st.sidebar.header("功能選單")
@@ -89,3 +89,4 @@ if df is not None:
                 final_score = (score_count / len(exam_df)) * 100
                 st.balloons()
                 st.metric("測驗結果", f"{final_score:.1f} 分", f"答對 {score_count} / {len(exam_df)}")
+
