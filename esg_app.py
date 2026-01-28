@@ -53,17 +53,16 @@ if df is not None:
     # 💡 教學說明介面 (當尚未產生考卷時顯示)
     if st.session_state.exam_df.empty:
         st.markdown("---")
-        st.header("ESG 題庫練習系統")
-        st.write("參考以下步驟開始練習：")
+        st.header("👋 歡迎使用 ESG 題庫練習系統！")
+        st.write("這是專為「永續發展基礎能力測驗」設計的練習工具。請參考以下步驟開始您的練習：")
         
         col1, col2, col3 = st.columns(3)
         with col1:
             st.info("### 1. 選擇模式\n在左側選單選擇 **分段練習**、**隨機挑戰** 或一次挑戰 **840題**。")
         with col2:
-            st.info("### 2. 設定數量\n利用滑桿調整想練習的題目數量。")
+            st.info("### 2. 設定數量\n利用滑桿調整您想練習的題目數量（建議每次 20-50 題效果最好）。")
         with col3:
             st.info("### 3. 開始測驗\n點擊 **「產生考卷」** 鈕，題目就會顯示在此處。")
-        """)
         
 
     # 測驗介面
@@ -112,5 +111,3 @@ if df is not None:
                 st.rerun()
 else:
     st.error("❌ 找不到數據源：請確認目錄下是否有正確格式的 exam_data.csv 檔案。")
-
-
