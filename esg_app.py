@@ -8,113 +8,114 @@ st.set_page_config(page_title="ESG 永續發展題庫系統", layout="wide")
 if 'submitted' not in st.session_state: st.session_state.submitted = False
 if 'exam_df' not in st.session_state: st.session_state.exam_df = pd.DataFrame()
 if 'wrong_questions' not in st.session_state:
-    st.session_state.wrong_questions = pd.DataFrame(columns=['題號', '題目', '正確答案'])
+    st.session_state.wrong_questions = pd.DataFrame(columns=['題號', '題目', '選項1', '選項2', '選項3', '選項4', '正確答案'])
 
 # 3. 讀取資料函式
-@st.cache_data # 增加快取，讀取速度會變快
+@st.cache_data
 def load_data():
     try:
+        # 使用你 CSV 的分隔符號 |
         return pd.read_csv('exam_data.csv', sep='|', encoding='utf-8')
     except:
         return None
 
 df = load_data()
 
-# 4. 主程式邏輯
 if df is not None:
-    st.title("🌱 ESG 永續發展基礎能力測驗系統")
-    st.caption(f"目前題庫總數：{len(df)} 題")
-
+    st.title("🌱 ESG 永續發展題庫練習系統 (840題全功能版)")
+    
     # --- 側邊欄：功能控制區 ---
     st.sidebar.header("⚙️ 測驗設定")
-    mode = st.sidebar.radio("測驗模式", ["分段練習", "隨機挑戰 (80題)", "錯題重溫"])
+    mode = st.sidebar.radio("測驗模式", ["分段練習", "隨機挑戰", "錯題重溫"])
+    
+    # 自定義數量功能
+    num_to_test = st.sidebar.slider("每次練習題目數量", 5, 100, 20)
     
     if mode == "分段練習":
         chunk_size = 100
         total_q = len(df)
         ranges = [f"{i+1}-{min(i+chunk_size, total_q)}" for i in range(0, total_q, chunk_size)]
-        selected_range = st.sidebar.selectbox("選擇題號範圍", ranges)
-    
-    if st.sidebar.button("✨ 產生考卷 / 重新測驗", use_container_width=True):
+        selected_range = st.sidebar.selectbox("選擇題號範圍起始", ranges)
+        start_idx = int(selected_range.split('-')[0]) - 1
+
+    # 生成考卷按鈕
+    if st.sidebar.button("✨ 產生考卷 / 重新抽題", use_container_width=True):
         st.session_state.submitted = False
         if mode == "分段練習":
-            start, end = map(int, selected_range.split('-'))
-            st.session_state.exam_df = df.iloc[start-1:end].copy()
-        elif mode == "隨機挑戰 (80題)":
-            st.session_state.exam_df = df.sample(n=80).copy()
+            # 從選定的範圍起始點，抓取使用者自訂數量的題目
+            st.session_state.exam_df = df.iloc[start_idx : start_idx + num_to_test].copy()
+        elif mode == "隨機挑戰":
+            # 使用 pandas 內建 sample 功能實現隨機
+            st.session_state.exam_df = df.sample(n=min(num_to_test, len(df))).copy()
         elif mode == "錯題重溫":
-            st.session_state.exam_df = st.session_state.wrong_questions.copy()
+            if not st.session_state.wrong_questions.empty:
+                st.session_state.exam_df = st.session_state.wrong_questions.sample(n=min(num_to_test, len(st.session_state.wrong_questions))).copy()
+            else:
+                st.session_state.exam_df = pd.DataFrame()
         st.rerun()
 
     # --- 畫面顯示區 ---
     if mode == "錯題重溫" and st.session_state.wrong_questions.empty:
-        st.info("目前沒有錯題紀錄，快去練習吧！")
+        st.info("目前沒有錯題紀錄。當你在其他模式答錯時，系統會自動收集到這裡！")
     
     elif not st.session_state.exam_df.empty:
         exam_df = st.session_state.exam_df
         user_answers = {}
 
-        # 頂部評分板 (交卷後顯示)
+        # 頂部評分看板
         if st.session_state.submitted:
             correct_total = 0
-            # 預先計算分數
             for idx, row in exam_df.iterrows():
                 opts = [str(row['選項1']), str(row['選項2']), str(row['選項3']), str(row['選項4'])]
                 if st.session_state.get(f"q_{idx}") == opts[int(row['正確答案'])-1]:
                     correct_total += 1
             
             score = (correct_total / len(exam_df)) * 100
-            col_a, col_b, col_c = st.columns(3)
-            col_a.metric("得分", f"{score:.1f}")
-            col_b.metric("答對題數", f"{correct_total} / {len(exam_df)}")
-            col_c.write("🎉" if score >= 70 else "💪 再接再厲")
+            st.divider()
+            c1, c2, c3 = st.columns(3)
+            c1.metric("得分", f"{score:.1f}")
+            c2.metric("答對題數", f"{correct_total} / {len(exam_df)}")
+            c3.success("及格！" if score >= 70 else "再加油！")
             st.divider()
 
-        # 題目渲染區
+        # 題目區
         for idx, row in exam_df.iterrows():
-            with st.container():
-                st.write(f"**Q{row['題號']}**: {row['題目']}")
-                opts = [str(row['選項1']), str(row['選項2']), str(row['選項3']), str(row['選項4'])]
-                
-                # 選項
-                user_answers[idx] = st.radio(
-                    f"Options_{idx}", opts, index=None, key=f"q_{idx}",
-                    label_visibility="collapsed", disabled=st.session_state.submitted
-                )
+            st.write(f"**Q{row['題號']}**: {row['題目']}")
+            opts = [str(row['選項1']), str(row['選項2']), str(row['選項3']), str(row['選項4'])]
+            
+            user_answers[idx] = st.radio(
+                f"options_{idx}", opts, index=None, key=f"q_{idx}",
+                label_visibility="collapsed", disabled=st.session_state.submitted
+            )
 
-                # 交卷後的逐題解析
-                if st.session_state.submitted:
-                    correct_idx = int(row['正確答案']) - 1
-                    correct_text = opts[correct_idx]
-                    
-                    if user_answers[idx] == correct_text:
-                        st.success("✅ 回答正確")
-                    else:
-                        st.error(f"❌ 回答錯誤（你的選擇：{user_answers[idx] if user_answers[idx] else '未作答'}）")
-                        st.info(f"💡 正確答案是：({row['正確答案']}) {correct_text}")
-                st.write("") # 間距
+            if st.session_state.submitted:
+                correct_idx = int(row['正確答案']) - 1
+                correct_text = opts[correct_idx]
+                if user_answers[idx] == correct_text:
+                    st.success(f"✅ 正確")
+                else:
+                    st.error(f"❌ 錯誤（你的選擇：{user_answers[idx] if user_answers[idx] else '未作答'}）")
+                    st.info(f"💡 正確答案：({row['正確答案']}) {correct_text}")
+            st.write("")
 
         # 底部按鈕
-        if not st.session_state.submitted:
-            if st.button("🏁 完成所有題目，交卷！", type="primary", use_container_width=True):
-                st.session_state.submitted = True
-                
-                # 自動更新錯題箱
-                temp_wrongs = []
-                for idx, row in exam_df.iterrows():
-                    opts = [str(row['選項1']), str(row['選項2']), str(row['選項3']), str(row['選項4'])]
-                    correct_text = opts[int(row['正確答案'])-1]
-                    if user_answers[idx] != correct_text:
-                        temp_wrongs.append({'題號': row['題號'], '題目': row['題目'], '正確答案': correct_text})
-                
-                if temp_wrongs:
-                    new_wrongs = pd.DataFrame(temp_wrongs)
-                    st.session_state.wrong_questions = pd.concat([st.session_state.wrong_questions, new_wrongs]).drop_duplicates(subset=['題號'])
-                
-                st.rerun()
-        else:
-            if st.button("🔄 重新測驗", use_container_width=True):
+        col_left, col_right = st.columns(2)
+        with col_left:
+            if not st.session_state.submitted:
+                if st.button("🏁 完成交卷", type="primary", use_container_width=True):
+                    st.session_state.submitted = True
+                    # 紀錄錯題邏輯
+                    new_wrongs = []
+                    for idx, row in exam_df.iterrows():
+                        opts = [str(row['選項1']), str(row['選項2']), str(row['選項3']), str(row['選項4'])]
+                        if user_answers[idx] != opts[int(row['正確答案'])-1]:
+                            new_wrongs.append(row)
+                    if new_wrongs:
+                        st.session_state.wrong_questions = pd.concat([st.session_state.wrong_questions, pd.DataFrame(new_wrongs)]).drop_duplicates(subset=['題號'])
+                    st.rerun()
+        with col_right:
+            if st.button("🔄 重新練習 / 清空", use_container_width=True):
                 st.session_state.submitted = False
                 st.rerun()
 else:
-    st.warning("找不到 exam_data.csv，請確認檔案已上傳至 GitHub 並正確設定分隔符號 |")
+    st.warning("請確認目錄下有 exam_data.csv 檔案。")
