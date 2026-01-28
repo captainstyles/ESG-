@@ -60,7 +60,7 @@ if df is not None:
         with col1:
             st.info("### 1. 選擇模式\n在左側選單選擇 **分段練習**、**隨機挑戰** 或一次挑戰 **840題**。")
         with col2:
-            st.info("### 2. 設定數量\n利用滑桿調整想練習的題目數量（。")
+            st.info("### 2. 設定數量\n利用滑桿調整想練習的題目數量。")
         with col3:
             st.info("### 3. 開始測驗\n點擊 **「產生考卷」** 鈕，題目就會顯示在此處。")
         
@@ -111,4 +111,5 @@ if df is not None:
                 st.rerun()
 else:
     st.error("❌ 找不到數據源：請確認目錄下是否有正確格式的 exam_data.csv 檔案。")
+
 
